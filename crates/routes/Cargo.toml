@@ -1,13 +1,15 @@
 [package]
-name = "main"
+name = "api_routes"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-api_routes = { path = "../routes" }
 api_db = { path = "../db" }
 
-tokio = { workspace = true }
-anyhow = { worspace = true }
+
+axum = "0.6"
+anyhow = { workspace = true }
+pretty-sha2 = { version = "0.1" }
+serde = { workspace = true }

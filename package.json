@@ -1,0 +1,13 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "db": "surreal start --log trace --user root --pass root memory",
+    "start": "cargo watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
