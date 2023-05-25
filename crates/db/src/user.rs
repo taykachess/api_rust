@@ -23,10 +23,10 @@ enum Role {
 }
 
 impl User {
-    pub fn new(username: String, pass: String) -> Self {
+    pub fn new(username: &str, pass: &str) -> Self {
         Self {
-            username,
-            pass,
+            username: username.to_owned(),
+            pass: pass.to_owned(),
             info: Default::default(),
             roles: vec![],
         }
@@ -35,5 +35,10 @@ impl User {
     pub async fn create_user(&self) -> Result<()> {
         crate::DB.create("user").content(self).await?;
         Ok(())
+    }
+
+    pub async fn get_user(id: &str) -> Result<User> {
+        let user: User = crate::DB.select(("user", id)).await?;
+        Ok(user)
     }
 }
