@@ -3,8 +3,8 @@ use surrealdb::Result;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {
-    username: String,
-    pass: String,
+    pub username: String,
+    pub pass: String,
     info: UserInfo,
     roles: Vec<Role>,
 }
@@ -37,8 +37,8 @@ impl User {
         Ok(())
     }
 
-    pub async fn get_user(id: &str) -> Result<User> {
-        let user: User = crate::DB.select(("user", id)).await?;
+    pub async fn get_user(id: &str) -> Result<Option<User>> {
+        let user: Option<User> = crate::DB.select(("user", id)).await?;
         Ok(user)
     }
 }
