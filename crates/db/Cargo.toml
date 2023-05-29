@@ -9,3 +9,10 @@ edition = "2021"
 surrealdb = "1.0.0-beta.9"
 serde = { workspace = true }
 uuid = { version = "1" }
+prisma-client-rust = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.8" }
+
+
+[features]
+"surreal" = []
+"prisma" = []
+"default" = ["surreal"]

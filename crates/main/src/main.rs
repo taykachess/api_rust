@@ -4,7 +4,7 @@ async fn main() -> anyhow::Result<()> {
     let ns = "test";
     let db = "test";
     println!("before problem");
-    api_db::init_db(addr_db, ns, db).await?;
+    api_db::surreal::init_db(addr_db, ns, db).await?;
     println!("after problem");
 
     let addr = "0.0.0.0:4000".parse()?;

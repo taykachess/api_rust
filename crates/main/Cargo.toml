@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 api_routes = { path = "../routes" }
-api_db = { path = "../db" }
+api_db = { path = "../db", default-features = true }
 
 tokio = { workspace = true }
 anyhow = { worspace = true }

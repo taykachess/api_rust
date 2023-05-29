@@ -5,7 +5,7 @@ services:
     ports:
       - 8000:8000
     pull_policy: always
-    command: start
+    command: start --log trace --user root --pass root
   api:
     image: rust:latest
     ports:

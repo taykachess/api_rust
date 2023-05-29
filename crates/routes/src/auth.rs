@@ -9,13 +9,15 @@ pub(crate) fn router() -> Router {
         .route("/login", post(login))
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 struct UserDto {
     username: String,
     pass: String,
 }
 
 async fn signup(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
+    println!("{:?}", user);
+
     let hashed_password = pretty_sha2::sha512::gen(&user.pass);
 
     let created_user =
@@ -23,7 +25,10 @@ async fn signup(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
 
     match created_user {
         Ok(_) => (),
-        Err(_) => return Err(StatusCode::NOT_FOUND),
+        Err(err) => {
+            println!("{}", err);
+            return Err(StatusCode::NOT_FOUND);
+        }
     }
 
     let token = encode(

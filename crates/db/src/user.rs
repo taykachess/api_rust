@@ -1,8 +1,17 @@
 use serde::{Deserialize, Serialize};
+
 use surrealdb::Result;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {
+    pub username: String,
+    pub pass: String,
+    info: UserInfo,
+    roles: Vec<Role>,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UserId {
+    id: i64,
     pub username: String,
     pub pass: String,
     info: UserInfo,
@@ -31,14 +40,31 @@ impl User {
             roles: vec![],
         }
     }
-
-    pub async fn create_user(&self) -> Result<()> {
-        crate::DB.create("user").content(self).await?;
-        Ok(())
+    #[cfg(feature = "surreal")]
+    pub async fn create_user(&self) -> Result<User> {
+        let user = crate::surreal::DB.create("user").content(self).await?;
+        println!("{:?}", user);
+        Ok(user)
     }
 
-    pub async fn get_user(id: &str) -> Result<Option<User>> {
-        let user: Option<User> = crate::DB.select(("user", id)).await?;
+    // #[cfg(feature = "prisma")]
+    // pub async fn create_user(&self) -> Result<User> {
+    //     let user = crate::surreal::DB.create("user").content(self).await?;
+    //     println!("{:?}", user);
+    //     Ok(user)
+    // }
+
+    #[cfg(feature = "surreal")]
+    pub async fn get_user(username: &str) -> Result<Option<User>> {
+        println!("{username}");
+        let mut user = crate::surreal::DB
+            .query(format!("SELECT * FROM user WHERE username = admin"))
+            .await?;
+
+        let user_new: Option<UserId> = user.take(1)?;
+        println!("{:?}", user_new);
+        let user: Option<User> = user.take(1)?;
+        println!("{user:?}");
         Ok(user)
     }
 }
