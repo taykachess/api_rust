@@ -5,6 +5,7 @@ async fn main() -> anyhow::Result<()> {
     let db = "test";
     println!("before problem");
     api_db::surreal::init_db(addr_db, ns, db).await?;
+    // api_db::prisma_client::init_bd().await;
     println!("after problem");
 
     let addr = "0.0.0.0:4000".parse()?;

@@ -2,12 +2,16 @@
 #[allow(warnings, unused)]
 mod prisma;
 
+use std::sync::Arc;
+
 use prisma::PrismaClient;
 use prisma_client_rust::NewClientError;
 
-async fn init_bd() {
+pub async fn init_bd() -> Arc<PrismaClient> {
     let prisma = PrismaClient::_builder()
         .build()
         .await
         .expect("Connection is closed");
+
+    Arc::new(prisma)
 }
