@@ -1,6 +1,6 @@
 use axum::{routing::get, Router};
 
-mod auth;
+pub mod auth;
 
 pub async fn init_server(addr: std::net::SocketAddr) -> anyhow::Result<()> {
     let app = Router::new()

@@ -10,12 +10,21 @@ pub(crate) fn router() -> Router {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
-struct UserDto {
+pub struct UserDto {
     username: String,
     pass: String,
 }
 
-async fn signup(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
+impl UserDto {
+    pub fn new(username: &str, pass: &str) -> Self {
+        Self {
+            username: username.to_owned(),
+            pass: pass.to_owned(),
+        }
+    }
+}
+
+pub async fn signup(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
     let hashed_password = pretty_sha2::sha512::gen(&user.pass);
 
     let created_user =
@@ -40,7 +49,7 @@ async fn signup(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
     Ok(token)
 }
 
-async fn login(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
+pub async fn login(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
     let user_from_db = match api_db::user::User::get_user(&user.username).await {
         Ok(option_user) => match option_user {
             Some(user) => user,
