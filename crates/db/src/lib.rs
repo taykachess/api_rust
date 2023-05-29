@@ -7,17 +7,17 @@ use surrealdb::{
 
 static DB: Surreal<Db> = Surreal::init();
 
-#[cfg(test)]
-pub async fn init_db(ns: &str, db: &str) -> Result<()> {
+// #[cfg(test)]
+pub async fn init_db_test() -> Result<()> {
     println!("TEST");
     DB.connect::<Mem>(()).await?;
     // Select a namespace + database
-    DB.use_ns(ns).use_db(db).await?;
+    let db = "test";
+    DB.use_ns(db).use_db(db).await?;
 
     Ok(())
 }
 
-#[cfg(not(test))]
 pub async fn init_db(addr: &str, ns: &str, db: &str) -> Result<()> {
     println!("PRODUCTION");
     DB.connect::<Mem>(()).await?;

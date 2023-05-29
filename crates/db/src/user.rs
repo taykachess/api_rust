@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use surrealdb::Result;
+use surrealdb::{sql::Thing, Result};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {
@@ -22,6 +22,12 @@ enum Role {
     Author,
 }
 
+#[derive(Debug, Deserialize)]
+struct Record {
+    #[allow(dead_code)]
+    id: Thing,
+}
+
 impl User {
     pub fn new(username: &str, pass: &str) -> Self {
         Self {
@@ -33,7 +39,12 @@ impl User {
     }
 
     pub async fn create_user(&self) -> Result<()> {
-        crate::DB.create("user").content(self).await?;
+        let id: Record = crate::DB
+            .create(("user", &self.username))
+            .content(self)
+            .await?;
+
+        println!("{id:?}");
         Ok(())
     }
 

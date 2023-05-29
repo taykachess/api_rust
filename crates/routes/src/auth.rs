@@ -33,10 +33,15 @@ async fn signup(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
     // TODO! move to separate spawn
     let hashed_password = pretty_sha2::sha512::gen(&user.pass);
 
+    println!("1");
+
     User::new(&user.username, &hashed_password)
         .create_user()
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|err| {
+            println!("{err:?}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     let token = tokio::task::spawn_blocking(move || {
         encode(
@@ -79,4 +84,25 @@ pub async fn login(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
     // TODO! move to separate spawn
 
     Ok(token)
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use api_db::init_db_test;
+
+    #[tokio::test]
+    async fn login_test() {
+        init_db_test().await.expect("failed to init db");
+
+        let Json(token) = signup(Json(UserDto {
+            username: "Vadim".to_string(),
+            pass: "12345".to_string(),
+        }))
+        .await
+        .expect("failed to signup");
+
+        println!("{token:?}");
+    }
 }
