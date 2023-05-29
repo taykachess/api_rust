@@ -24,44 +24,46 @@ impl UserDto {
     }
 }
 
-pub async fn signup(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
+#[derive(Serialize, Debug)]
+struct Token {
+    token: String,
+}
+
+async fn signup(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
+    // TODO! move to separate spawn
     let hashed_password = pretty_sha2::sha512::gen(&user.pass);
 
-    let created_user =
-        api_db::user::User::create_user(&User::new(&user.username, &hashed_password)).await;
+    User::new(&user.username, &hashed_password)
+        .create_user()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    match created_user {
-        Ok(_) => (),
-        Err(_) => return Err(StatusCode::NOT_FOUND),
-    }
+    let token = tokio::task::spawn_blocking(move || {
+        encode(
+            &Header::default(),
+            &user,
+            &EncodingKey::from_secret("secret".as_ref()),
+        )
+    })
+    .await
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let token = encode(
-        &Header::default(),
-        &user,
-        &EncodingKey::from_secret("secret".as_ref()),
-    );
-
-    let token = match token {
-        Ok(jwt) => jwt,
-        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
-    };
-
-    Ok(token)
+    Ok(Json(Token { token }))
 }
 
 pub async fn login(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
-    let user_from_db = match api_db::user::User::get_user(&user.username).await {
-        Ok(option_user) => match option_user {
-            Some(user) => user,
-            None => return Err(StatusCode::NOT_FOUND),
-        },
-        Err(_) => return Err(StatusCode::SERVICE_UNAVAILABLE),
-    };
+    let user_from_db = api_db::user::User::get_user(&user.username)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    // TODO! move to separate spawn
 
     let hashed_password = pretty_sha2::sha512::gen(&user.pass);
 
     if user_from_db.pass != hashed_password {
-        return Err(StatusCode::BAD_REQUEST);
+        return Err(StatusCode::UNAUTHORIZED);
     }
 
     let token = encode(
@@ -69,12 +71,12 @@ pub async fn login(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
         &user,
         &EncodingKey::from_secret("secret".as_ref()),
     );
-    // .or_else(|_| Err(StatusCode::INTERNAL_SERVER_ERROR));
 
     let token = match token {
         Ok(jwt) => jwt,
         Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
     };
+    // TODO! move to separate spawn
 
     Ok(token)
 }
