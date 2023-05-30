@@ -10,18 +10,9 @@ pub(crate) fn router() -> Router {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
-pub struct UserDto {
+struct UserDto {
     username: String,
     pass: String,
-}
-
-impl UserDto {
-    pub fn new(username: &str, pass: &str) -> Self {
-        Self {
-            username: username.to_owned(),
-            pass: pass.to_owned(),
-        }
-    }
 }
 
 #[derive(Serialize, Debug)]
@@ -57,7 +48,7 @@ async fn signup(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
     Ok(Json(Token { token }))
 }
 
-pub async fn login(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
+async fn login(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
     let user_from_db = api_db::user::User::get_user(&user.username)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -66,24 +57,39 @@ pub async fn login(Json(user): Json<UserDto>) -> Result<String, StatusCode> {
     // TODO! move to separate spawn
 
     let hashed_password = pretty_sha2::sha512::gen(&user.pass);
-
     if user_from_db.pass != hashed_password {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    let token = encode(
-        &Header::default(),
-        &user,
-        &EncodingKey::from_secret("secret".as_ref()),
-    );
+    tokio::task::spawn_blocking({
+        let pass_from_db = user_from_db.pass.clone();
+        let pass_input = user.pass.clone();
+        move || {
+            let hashed_password = pretty_sha2::sha512::gen(pass_input);
+            if pass_from_db != hashed_password {
+                return Err(StatusCode::UNAUTHORIZED);
+            }
+            Ok(hashed_password)
+        }
+    })
+    .await
+    .map_err(|_| StatusCode::UNAUTHORIZED)?
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    let token = match token {
-        Ok(jwt) => jwt,
-        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
-    };
+    let token = tokio::task::spawn_blocking(move || {
+        encode(
+            &Header::default(),
+            &user,
+            &EncodingKey::from_secret("secret".as_ref()),
+        )
+    })
+    .await
+    .map_err(|_| StatusCode::UNAUTHORIZED)?
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+
     // TODO! move to separate spawn
 
-    Ok(token)
+    Ok(Json(Token { token }))
 }
 
 #[cfg(test)]
@@ -96,13 +102,30 @@ mod tests {
     async fn login_test() {
         init_db_test().await.expect("failed to init db");
 
-        let Json(token) = signup(Json(UserDto {
+        //  Signup user with password
+        let Json(_) = signup(Json(UserDto {
             username: "Vadim".to_string(),
             pass: "12345".to_string(),
         }))
         .await
         .expect("failed to signup");
 
+        //  Right password
+        let Json(token) = login(Json(UserDto {
+            username: "Vadim".to_string(),
+            pass: "12345".to_string(),
+        }))
+        .await
+        .expect("failed to login");
+
         println!("{token:?}");
+
+        //  Wrong password!
+        let res = login(Json(UserDto {
+            username: "Vadim".to_string(),
+            pass: "123456".to_string(),
+        }))
+        .await;
+        assert!(res.is_err());
     }
 }
