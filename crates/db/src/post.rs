@@ -38,6 +38,11 @@ impl Post {
         Ok(())
     }
 
+    pub async fn delete_post(id: Uuid) -> Result<()> {
+        let _: Option<Post> = crate::DB.delete(("post", id.to_string())).await?;
+        Ok(())
+    }
+
     pub async fn get_all_post() -> Result<Vec<Post>> {
         let posts: Vec<Post> = crate::DB.select("post").await?;
 

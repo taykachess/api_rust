@@ -35,18 +35,22 @@ async fn create_post(Json(post_dto): Json<PostDto>) -> Result<Json<String>, Stat
 }
 
 // WOW ordering of extractors is important!
-async fn update_post(
-    Path(post_id): Path<Uuid>,
-    Json(post): Json<Post>,
-) -> Result<Json<String>, StatusCode> {
+async fn update_post(Path(post_id): Path<Uuid>, Json(post): Json<Post>) -> Result<(), StatusCode> {
     Post::update_post(post, post_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(Json("StatusCode::OK".to_owned()))
+    // FIXME: () or StatusCode::OK
+    Ok(())
 }
 
-async fn delete_post() {}
+async fn delete_post(Path(post_id): Path<Uuid>) -> Result<(), StatusCode> {
+    Post::delete_post(post_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(())
+}
 
 async fn get_all_post() {
     // TODO: Filters and Pagintation
