@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 serde = { workspace = true }
-uuid = { version = "1" }
+uuid = { workspace = true }
 surrealdb = { workspace = true }

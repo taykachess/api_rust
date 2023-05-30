@@ -10,18 +10,27 @@ pub(crate) fn router() -> Router {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
-struct UserDto {
+pub(crate) struct UserDto {
     username: String,
     pass: String,
 }
 
+impl UserDto {
+    pub fn new(username: &str, pass: &str) -> Self {
+        Self {
+            username: username.to_owned(),
+            pass: pass.to_owned(),
+        }
+    }
+}
+
 #[derive(Serialize, Debug)]
-struct Token {
+pub(crate) struct Token {
     token: String,
 }
 
-async fn signup(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
-    // TODO! move to separate spawn
+pub(crate) async fn signup(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
+    // TODO: move to separate spawn
     let hashed_password = pretty_sha2::sha512::gen(&user.pass);
 
     println!("1");
@@ -48,13 +57,13 @@ async fn signup(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
     Ok(Json(Token { token }))
 }
 
-async fn login(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
+pub(crate) async fn login(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
     let user_from_db = api_db::user::User::get_user(&user.username)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?;
 
-    // TODO! move to separate spawn
+    // TODO: move to separate spawn
 
     let hashed_password = pretty_sha2::sha512::gen(&user.pass);
     if user_from_db.pass != hashed_password {
@@ -86,8 +95,6 @@ async fn login(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
     .await
     .map_err(|_| StatusCode::UNAUTHORIZED)?
     .map_err(|_| StatusCode::UNAUTHORIZED)?;
-
-    // TODO! move to separate spawn
 
     Ok(Json(Token { token }))
 }

@@ -61,6 +61,7 @@ dependencies = [
  "pretty-sha2",
  "serde",
  "tokio",
+ "uuid",
 ]
 
 [[package]]

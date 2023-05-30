@@ -23,9 +23,15 @@ enum Role {
 }
 
 #[derive(Debug, Deserialize)]
-struct Record {
+pub struct Record {
     #[allow(dead_code)]
     id: Thing,
+}
+
+impl Record {
+    pub fn id(&self) -> &Thing {
+        &self.id
+    }
 }
 
 impl User {
