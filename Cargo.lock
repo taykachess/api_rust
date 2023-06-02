@@ -47,6 +47,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "surrealdb",
+ "tokio",
  "uuid",
 ]
 
@@ -57,6 +58,7 @@ dependencies = [
  "anyhow",
  "api_db",
  "axum",
+ "http",
  "jsonwebtoken",
  "pretty-sha2",
  "serde",

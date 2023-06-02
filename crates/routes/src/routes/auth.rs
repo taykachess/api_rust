@@ -3,6 +3,8 @@ use axum::{http::StatusCode, routing::post, Json, Router};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 
+use crate::mw::jwt::Token;
+
 pub(crate) fn router() -> Router {
     Router::new()
         .route("/signup", post(signup))
@@ -24,16 +26,16 @@ impl UserDto {
     }
 }
 
-#[derive(Serialize, Debug)]
-pub(crate) struct Token {
-    token: String,
-}
-
 pub(crate) async fn signup(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
-    // TODO: move to separate spawn
-    let hashed_password = pretty_sha2::sha512::gen(&user.pass);
-
-    println!("1");
+    let hashed_password = tokio::task::spawn_blocking({
+        let pass_input = user.pass.clone();
+        move || {
+            let hashed_password = pretty_sha2::sha512::gen(pass_input);
+            hashed_password
+        }
+    })
+    .await
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
     User::new(&user.username, &hashed_password)
         .create_user()
@@ -54,7 +56,7 @@ pub(crate) async fn signup(Json(user): Json<UserDto>) -> Result<Json<Token>, Sta
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(Json(Token { token }))
+    Ok(Json(Token::new(token)))
 }
 
 pub(crate) async fn login(Json(user): Json<UserDto>) -> Result<Json<Token>, StatusCode> {
@@ -63,40 +65,22 @@ pub(crate) async fn login(Json(user): Json<UserDto>) -> Result<Json<Token>, Stat
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?;
 
-    // TODO: move to separate spawn
-
-    let hashed_password = pretty_sha2::sha512::gen(&user.pass);
-    if user_from_db.pass != hashed_password {
-        return Err(StatusCode::UNAUTHORIZED);
-    }
-
-    tokio::task::spawn_blocking({
-        let pass_from_db = user_from_db.pass.clone();
-        let pass_input = user.pass.clone();
-        move || {
-            let hashed_password = pretty_sha2::sha512::gen(pass_input);
-            if pass_from_db != hashed_password {
-                return Err(StatusCode::UNAUTHORIZED);
-            }
-            Ok(hashed_password)
-        }
-    })
-    .await
-    .map_err(|_| StatusCode::UNAUTHORIZED)?
-    .map_err(|_| StatusCode::UNAUTHORIZED)?;
-
     let token = tokio::task::spawn_blocking(move || {
+        let hashed_password = pretty_sha2::sha512::gen(&user.pass);
+        if user_from_db.pass != hashed_password {
+            return Err(StatusCode::UNAUTHORIZED);
+        };
         encode(
             &Header::default(),
             &user,
             &EncodingKey::from_secret("secret".as_ref()),
         )
+        .map_err(|_| StatusCode::UNAUTHORIZED)
     })
     .await
-    .map_err(|_| StatusCode::UNAUTHORIZED)?
-    .map_err(|_| StatusCode::UNAUTHORIZED)?;
+    .map_err(|_| StatusCode::UNAUTHORIZED)??;
 
-    Ok(Json(Token { token }))
+    Ok(Json(Token::new(token)))
 }
 
 #[cfg(test)]
@@ -133,6 +117,7 @@ mod tests {
             pass: "123456".to_string(),
         }))
         .await;
-        assert!(res.is_err());
+        // assert!(res.is_err());
+        assert!(matches!(res, Err(StatusCode::UNAUTHORIZED)));
     }
 }
