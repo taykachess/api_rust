@@ -1,16 +1,10 @@
 use surrealdb::engine::local::Db;
 use surrealdb::engine::local::Mem;
-use surrealdb::{
-    engine::remote::ws::{Client, Ws},
-    Result, Surreal,
-};
+use surrealdb::{Result, Surreal};
 
 static DB: Surreal<Db> = Surreal::init();
 
 pub async fn init_db_test() -> Result<()> {
-    use tokio::sync::OnceCell;
-
-    println!("TEST");
     DB.connect::<Mem>(()).await?;
     // Select a namespace + database
     let db = "test";
@@ -20,7 +14,6 @@ pub async fn init_db_test() -> Result<()> {
     // static INIT: OnceCell<Result<()>> = OnceCell::const_new();
     // let res = INIT
     // .get_or_init(|| async {
-    //         println!("TEST");
     //         DB.connect::<Mem>(()).await?;
     //         // Select a namespace + database
     //         let db = "test";
@@ -35,7 +28,7 @@ pub async fn init_db_test() -> Result<()> {
     // }
 }
 
-pub async fn init_db(addr: &str, ns: &str, db: &str) -> Result<()> {
+pub async fn init_db(ns: &str, db: &str) -> Result<()> {
     println!("PRODUCTION");
     DB.connect::<Mem>(()).await?;
     // Select a namespace + database

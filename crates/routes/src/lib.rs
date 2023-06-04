@@ -1,9 +1,8 @@
 use axum::{routing::get, Router};
+mod error;
 
 mod mw;
 mod routes;
-
-// TODO Create custom Error type for routes
 
 pub async fn init_server(addr: std::net::SocketAddr) -> anyhow::Result<()> {
     let app = Router::new()

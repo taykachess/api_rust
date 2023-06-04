@@ -1,13 +1,9 @@
-use anyhow::Ok;
-use axum::{
-    extract::Extension,
-    http::{Request, StatusCode},
-    middleware::{self, Next},
-    response::{IntoResponse, Response},
-    routing::get,
-    Router,
-};
+use api_db::user::AuthUser;
+use axum::{http::Request, middleware::Next, response::Response};
+use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::Serialize;
+
+use crate::error::{route_error, RouteResult};
 
 #[derive(Serialize, Debug, Clone)]
 pub(crate) struct Token {
@@ -18,10 +14,15 @@ impl Token {
     pub(crate) fn new(token: String) -> Self {
         Self { token }
     }
+
+    #[cfg(test)]
+    pub fn get(&self) -> &str {
+        &self.token
+    }
 }
 
-pub(crate) async fn token<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
-    println!("Middleware");
+pub(crate) async fn token<B>(mut req: Request<B>, next: Next<B>) -> RouteResult<Response> {
+    // transform option into
     let auth_header = req
         .headers()
         .get(http::header::AUTHORIZATION)
@@ -30,21 +31,45 @@ pub(crate) async fn token<B>(mut req: Request<B>, next: Next<B>) -> Result<Respo
     let auth_header = if let Some(auth_header) = auth_header {
         auth_header
     } else {
-        return Err(StatusCode::UNAUTHORIZED);
+        return Err(route_error!(UNAUTHORIZED, "Auth header not found."));
     };
 
-    if let Some(token) = authorize_current_user(auth_header).await {
+    let auth_header = auth_header.split_whitespace().collect::<Vec<_>>();
+    if auth_header.len() != 2 {
+        return Err(route_error!(UNAUTHORIZED, "Wrong parcing auth header."));
+    }
+
+    let token = auth_header[1];
+
+    // let user = authorize_current_user(token)
+    //     .await
+    //     .expect("fail to authorize user");
+
+    if let Ok(user) = authorize_current_user(token).await {
         // insert the current user into a request extension so the handler can
         // extract it
-        req.extensions_mut().insert(token);
-        Ok(next.run(req).await).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        println!("user: {:?}", user);
+        req.extensions_mut().insert(user);
+
+        let res = next.run(req).await;
+        println!("ok");
+        Ok(res)
     } else {
-        Err(StatusCode::UNAUTHORIZED)
+        Err(route_error!(UNAUTHORIZED, "Can't extract user."))
     }
 }
 
-async fn authorize_current_user(token: &str) -> Option<Token> {
-    Some(Token::new("token".to_owned()))
+// TODO can I get rid of "async" ?  Replace spawn::blocking ?
+pub async fn authorize_current_user(token: &str) -> RouteResult<AuthUser> {
+    let user = decode::<AuthUser>(
+        token,
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default(),
+    )
+    .map_err(|_| route_error!(NOT_FOUND, "Page not found."))?;
+
+    Ok(user.claims)
+
     // ...
 }
 

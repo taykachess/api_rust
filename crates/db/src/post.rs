@@ -4,20 +4,44 @@ use uuid::Uuid;
 
 use crate::user::Record;
 
+#[derive(Deserialize, Serialize)]
+pub struct PostCreateDto {
+    // username: String,
+    title: Option<String>,
+    body: Option<String>,
+}
+
+impl PostCreateDto {
+    pub fn new(username: &str, title: &str, body: &str) -> Self {
+        Self {
+            // username: username.to_owned(),
+            title: Option::Some(title.to_owned()),
+            body: Option::Some(title.to_owned()),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Post {
     // Get rid of ID
     username: String,
-    title: String,
-    body: String,
+    title: Option<String>,
+    body: Option<String>,
 }
 
 impl Post {
-    pub fn new(username: &str, title: &str, body: &str) -> Self {
+    pub fn new(
+        PostCreateDto {
+            // username,
+            title,
+            body,
+        }: PostCreateDto,
+        username: String,
+    ) -> Self {
         Self {
-            username: username.to_owned(),
-            title: title.to_owned(),
-            body: body.to_owned(),
+            username,
+            title,
+            body,
         }
     }
 

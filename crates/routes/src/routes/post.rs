@@ -1,5 +1,7 @@
-use crate::mw::jwt::Token;
-use api_db::post::Post;
+use api_db::{
+    post::{Post, PostCreateDto},
+    user::AuthUser,
+};
 use axum::{
     extract::Path,
     http::StatusCode,
@@ -8,30 +10,24 @@ use axum::{
     Extension, Json, Router,
 };
 
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::mw::jwt::Token;
 
 pub(crate) fn router() -> Router {
     Router::new()
-        // .route("/", get(get_all_post))
         .route("/", post(create_post))
+        // .route("/", get(get_all_post))
         // .route("/:id", patch(update_post))
         // .route("/:id", delete(delete_post))
         .route_layer(middleware::from_fn(crate::mw::jwt::token))
 }
 
-#[derive(Deserialize, Serialize)]
-struct PostDto {
-    title: String,
-    body: String,
-}
-
 async fn create_post(
-    Extension(_): Extension<Token>,
-    Json(post_dto): Json<PostDto>,
+    Extension(user): Extension<AuthUser>,
+    Json(post_create_dto): Json<PostCreateDto>,
 ) -> Result<Json<String>, StatusCode> {
-    // TODO: extract author via middleware username
-    let post = Post::new("vadim", &post_dto.title, &post_dto.body);
+    let post = Post::new(post_create_dto, user.username);
     let post_id = post
         .create_post()
         .await
@@ -60,13 +56,13 @@ async fn delete_post(Path(post_id): Path<Uuid>) -> Result<(), StatusCode> {
 }
 
 async fn get_all_post() {
-    // TODO: Filters and Pagintation
+    todo!()
 }
 
 #[cfg(test)]
 mod tests {
 
-    use crate::routes::auth::UserDto;
+    use crate::{mw::jwt::authorize_current_user, routes::auth::UserDto};
 
     use super::*;
     use api_db::init_db_test;
@@ -88,17 +84,14 @@ mod tests {
 
         // TODO: use token for authentication
 
-        println!("{token:?}");
+        let user = authorize_current_user(token.get())
+            .await
+            .expect("fail to authorize user");
 
-        let post_dto = PostDto {
-            title: "test".to_owned(),
-            body: "test".to_owned(),
-        };
+        let post_create_dto = PostCreateDto::new(&user.username, "title", "body");
 
-        let post = create_post(Extension(token), Json(post_dto))
+        let _ = create_post(Json(post_create_dto))
             .await
             .expect("failed to create post");
-
-        println!("{:?}", post);
     }
 }

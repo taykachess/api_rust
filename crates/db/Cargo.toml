@@ -10,3 +10,4 @@ serde = { workspace = true }
 uuid = { workspace = true }
 surrealdb = { workspace = true }
 tokio = { workspace = true }
+chrono = { workspace = true }

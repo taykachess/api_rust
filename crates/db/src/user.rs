@@ -1,6 +1,29 @@
 use serde::{Deserialize, Serialize};
 use surrealdb::{sql::Thing, Result};
 
+use chrono::{DateTime, Duration, Utc};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AuthUser {
+    pub username: String,
+    pub roles: Vec<Role>,
+    exp: usize,
+}
+
+impl AuthUser {
+    pub fn new(username: &str) -> Self {
+        let now: DateTime<Utc> = Utc::now();
+        let one_week_later: DateTime<Utc> = now + Duration::weeks(1);
+        let one_week_later = one_week_later.timestamp() as usize;
+        Self {
+            username: username.to_owned(),
+            roles: vec![],
+            // TODO UTC timestamp
+            exp: one_week_later,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {
     pub username: String,
@@ -15,8 +38,8 @@ struct UserInfo {
     surname: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-enum Role {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum Role {
     Admin,
     Moderator,
     Author,
@@ -51,7 +74,6 @@ impl User {
             .content(self)
             .await?;
 
-        println!("{id:?}");
         Ok(())
     }
 
