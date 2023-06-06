@@ -17,9 +17,9 @@ use crate::mw::jwt::Token;
 pub(crate) fn router() -> Router {
     Router::new()
         .route("/", post(create_post))
-        // .route("/", get(get_all_post))
-        // .route("/:id", patch(update_post))
-        // .route("/:id", delete(delete_post))
+        .route("/", get(get_post))
+        .route("/:id", patch(update_post))
+        .route("/:id", delete(delete_post))
         .route_layer(middleware::from_fn(crate::mw::jwt::token))
 }
 
@@ -40,23 +40,27 @@ async fn create_post(
 async fn update_post(
     Path(post_id): Path<Uuid>,
     Json(post): Json<Post>,
-) -> Result<StatusCode, StatusCode> {
-    Post::update_post(post, post_id)
+) -> Result<String, StatusCode> {
+    let post_id = Post::update_post(post, post_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(StatusCode::NO_CONTENT)
+    Ok(post_id)
 }
 
-async fn delete_post(Path(post_id): Path<Uuid>) -> Result<(), StatusCode> {
-    Post::delete_post(post_id)
+async fn delete_post(Path(post_id): Path<Uuid>) -> Result<String, StatusCode> {
+    let post_id = Post::delete_post(post_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(())
+    Ok(post_id)
 }
 
-async fn get_all_post() {
-    todo!()
+async fn get_post(Path(post_id): Path<Uuid>) -> Result<Json<Post>, StatusCode> {
+    let post = Post::get_post(post_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(post))
 }
 
 #[cfg(test)]
@@ -72,7 +76,8 @@ mod tests {
         init_db_test().await.expect("failed to init db");
 
         // TODO: DRY
-        //  Signup user with password
+
+        //  Signup
         let Json(_) = crate::routes::auth::signup(Json(UserDto::new("Vadim123", "12345")))
             .await
             .expect("failed to signup");
@@ -82,16 +87,38 @@ mod tests {
             .await
             .expect("failed to login");
 
-        // TODO: use token for authentication
-
         let user = authorize_current_user(token.get())
             .await
             .expect("fail to authorize user");
 
-        let post_create_dto = PostCreateDto::new(&user.username, "title", "body");
+        let post_create_dto = PostCreateDto::new(Option::None, Option::Some("Body".to_owned()));
 
-        let _ = create_post(Json(post_create_dto))
+        let Json(post_id) = create_post(Extension(user.clone()), Json(post_create_dto))
             .await
             .expect("failed to create post");
+
+        println!("Post id , {post_id}");
+        let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
+            .await
+            .expect("Not found Post");
+        println!("{post:?}");
+
+        let post_id_thing = update_post(
+            Path(Uuid::try_parse(&post_id).expect("Not parced")),
+            Json(Post::new(
+                PostCreateDto::new(Option::Some("Title".to_owned()), Option::None),
+                user.username,
+            )),
+        )
+        .await
+        .expect("Post not updated");
+
+        // TODO привести все id к одному виду
+        println!("Post id , {post_id_thing}");
+        let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
+            .await
+            .expect("Not found Post");
+
+        println!("{post:?}");
     }
 }

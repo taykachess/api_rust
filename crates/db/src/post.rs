@@ -12,16 +12,12 @@ pub struct PostCreateDto {
 }
 
 impl PostCreateDto {
-    pub fn new(username: &str, title: &str, body: &str) -> Self {
-        Self {
-            // username: username.to_owned(),
-            title: Option::Some(title.to_owned()),
-            body: Option::Some(title.to_owned()),
-        }
+    pub fn new(title: Option<String>, body: Option<String>) -> Self {
+        Self { title, body }
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Post {
     // Get rid of ID
     username: String,
@@ -53,23 +49,23 @@ impl Post {
         Ok(id)
     }
 
-    pub async fn update_post(self, id: Uuid) -> Result<()> {
-        let _: Option<Post> = crate::DB
+    pub async fn update_post(self, id: Uuid) -> Result<String> {
+        let post: Record = crate::DB
             .update(("post", id.to_string()))
             .content(self)
             .await?;
 
-        Ok(())
+        Ok(post.id().to_string())
     }
 
-    pub async fn delete_post(id: Uuid) -> Result<()> {
-        let _: Option<Post> = crate::DB.delete(("post", id.to_string())).await?;
-        Ok(())
+    pub async fn delete_post(id: Uuid) -> Result<String> {
+        let post: Record = crate::DB.delete(("post", id.to_string())).await?;
+        Ok(post.id().to_string())
     }
 
-    pub async fn get_all_post() -> Result<Vec<Post>> {
-        let posts: Vec<Post> = crate::DB.select("post").await?;
+    pub async fn get_post(id: Uuid) -> Result<Post> {
+        let post: Post = crate::DB.select(("post", id.to_string())).await?;
 
-        Ok(posts)
+        Ok(post)
     }
 }
