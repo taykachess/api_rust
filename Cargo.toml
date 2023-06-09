@@ -11,3 +11,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
 surrealdb = { version = "1.0.0-beta.9", features = ["kv-mem"] }
 axum = "0.6"
+uuid = { version = "1" }
+http = { version = "0.2" }
+
+chrono = { version = "0.4", features = ["serde"] }
+dotenv = { version = "0.15" }

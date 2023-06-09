@@ -45,8 +45,10 @@ checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 name = "api_db"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "serde",
  "surrealdb",
+ "tokio",
  "uuid",
 ]
 
@@ -57,10 +59,14 @@ dependencies = [
  "anyhow",
  "api_db",
  "axum",
+ "dotenv",
+ "http",
  "jsonwebtoken",
  "pretty-sha2",
  "serde",
+ "serde_json",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -463,6 +469,12 @@ dependencies = [
  "regex",
  "urlencoding",
 ]
+
+[[package]]
+name = "dotenv"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
 name = "echodb"
@@ -1032,6 +1044,7 @@ dependencies = [
  "anyhow",
  "api_db",
  "api_routes",
+ "dotenv",
  "tokio",
 ]
 

@@ -1,1 +1,35 @@
 GET http://localhost:4000/auth/
+
+
+###
+POST http://localhost:4000/auth/signup
+Content-Type: application/json
+
+{
+    "username": "Vadim",
+    "pass": "Moiseenko"
+}
+
+
+###
+POST http://localhost:4000/auth/login
+Content-Type: application/json
+
+{
+    "username": "Vadim",
+    "pass": "Moiseenko"
+}
+
+
+###
+POST http://localhost:4000/post
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlZhZGltIiwicm9sZXMiOltdLCJleHAiOjE2ODY0MDQwNDZ9.iehXUUAMfs2WCBzZgNbNjp3aVtctOUNnwEnJxAEN138
+Content-Type: application/json
+
+{
+    "title": "My first post",
+    "body": "This is my first post"
+}
+
+# title: String,
+#     body: String,
