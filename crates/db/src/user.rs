@@ -18,12 +18,28 @@ impl AuthUser {
         Self {
             username: username.to_owned(),
             roles: vec![],
-            // TODO UTC timestamp
             exp: one_week_later,
         }
     }
 }
 
+// Используется для входа в систему и регистрации
+#[derive(Deserialize, Serialize, Clone)]
+pub struct UserCredentialsDto {
+    pub username: String,
+    pub pass: String,
+}
+
+impl UserCredentialsDto {
+    pub fn new(username: &str, pass: &str) -> Self {
+        Self {
+            username: username.to_owned(),
+            pass: pass.to_owned(),
+        }
+    }
+}
+
+// Так лежат данные пользователя в базе данных
 #[derive(Serialize, Deserialize, Debug)]
 pub struct User {
     pub username: String,
@@ -52,8 +68,8 @@ pub struct Record {
 }
 
 impl Record {
-    pub fn id(&self) -> &Thing {
-        &self.id
+    pub fn id(&self) -> String {
+        self.id.id.to_raw()
     }
 }
 

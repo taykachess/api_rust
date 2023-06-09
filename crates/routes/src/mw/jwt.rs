@@ -1,9 +1,11 @@
+use std::env;
+
 use api_db::user::AuthUser;
 use axum::{http::Request, middleware::Next, response::Response};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::Serialize;
 
-use crate::error::{route_error, RouteResult};
+use crate::error::prelude::*;
 
 #[derive(Serialize, Debug, Clone)]
 pub(crate) struct Token {
@@ -41,32 +43,29 @@ pub(crate) async fn token<B>(mut req: Request<B>, next: Next<B>) -> RouteResult<
 
     let token = auth_header[1];
 
-    // let user = authorize_current_user(token)
-    //     .await
-    //     .expect("fail to authorize user");
-
     if let Ok(user) = authorize_current_user(token).await {
-        // insert the current user into a request extension so the handler can
-        // extract it
-        println!("user: {:?}", user);
         req.extensions_mut().insert(user);
-
         let res = next.run(req).await;
-        println!("ok");
         Ok(res)
     } else {
         Err(route_error!(UNAUTHORIZED, "Can't extract user."))
     }
 }
 
-// TODO can I get rid of "async" ?  Replace spawn::blocking ?
-pub async fn authorize_current_user(token: &str) -> RouteResult<AuthUser> {
-    let user = decode::<AuthUser>(
-        token,
-        &DecodingKey::from_secret("secret".as_ref()),
-        &Validation::default(),
-    )
-    .map_err(|_| route_error!(NOT_FOUND, "Page not found."))?;
+pub(crate) async fn authorize_current_user(token: &str) -> RouteResult<AuthUser> {
+    let token = token.to_owned();
+    let secret = env::var("JWT_SECRET")?;
+
+    let user = tokio::task::spawn_blocking(move || {
+        decode::<AuthUser>(
+            &token,
+            &DecodingKey::from_secret(secret.as_ref()),
+            &Validation::default(),
+        )
+    })
+    .await
+    .context("Wrong decoding token.")?
+    .context("Wrong decoding token.")?;
 
     Ok(user.claims)
 

@@ -66,26 +66,29 @@ async fn get_post(Path(post_id): Path<Uuid>) -> Result<Json<Post>, StatusCode> {
 #[cfg(test)]
 mod tests {
 
-    use crate::{mw::jwt::authorize_current_user, routes::auth::UserDto};
+    use crate::mw::jwt::authorize_current_user;
 
     use super::*;
-    use api_db::init_db_test;
+    use api_db::{init_db_test, user::UserCredentialsDto};
 
     #[tokio::test]
     async fn create_post_test() {
+        dotenv::dotenv().ok();
         init_db_test().await.expect("failed to init db");
 
         // TODO: DRY
 
         //  Signup
-        let Json(_) = crate::routes::auth::signup(Json(UserDto::new("Vadim123", "12345")))
-            .await
-            .expect("failed to signup");
+        let Json(_) =
+            crate::routes::auth::signup(Json(UserCredentialsDto::new("Vadim123", "12345")))
+                .await
+                .expect("failed to signup");
 
         //  login
-        let Json(token) = crate::routes::auth::login(Json(UserDto::new("Vadim123", "12345")))
-            .await
-            .expect("failed to login");
+        let Json(token) =
+            crate::routes::auth::login(Json(UserCredentialsDto::new("Vadim123", "12345")))
+                .await
+                .expect("failed to login");
 
         let user = authorize_current_user(token.get())
             .await
@@ -97,13 +100,11 @@ mod tests {
             .await
             .expect("failed to create post");
 
-        println!("Post id , {post_id}");
         let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
             .await
             .expect("Not found Post");
-        println!("{post:?}");
 
-        let post_id_thing = update_post(
+        let post_id = update_post(
             Path(Uuid::try_parse(&post_id).expect("Not parced")),
             Json(Post::new(
                 PostCreateDto::new(Option::Some("Title".to_owned()), Option::None),
@@ -114,11 +115,8 @@ mod tests {
         .expect("Post not updated");
 
         // TODO привести все id к одному виду
-        println!("Post id , {post_id_thing}");
         let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
             .await
             .expect("Not found Post");
-
-        println!("{post:?}");
     }
 }

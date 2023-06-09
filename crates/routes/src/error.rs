@@ -12,8 +12,7 @@ pub(crate) mod prelude {
     pub(crate) use super::{ensure, route_error, throw, RouteResult, RouteResultContext};
 }
 
-// FIXME add pub(crate)
-pub struct RouteError {
+pub(crate) struct RouteError {
     inner: Error,
     location: &'static Location<'static>,
     status_code: StatusCode,

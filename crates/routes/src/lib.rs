@@ -4,6 +4,9 @@ mod error;
 mod mw;
 mod routes;
 
+#[cfg(test)]
+mod test_utils;
+
 pub async fn init_server(addr: std::net::SocketAddr) -> anyhow::Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!!" }))

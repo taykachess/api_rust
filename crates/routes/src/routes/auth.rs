@@ -1,10 +1,11 @@
-use api_db::user::{AuthUser, User};
+use api_db::user::{AuthUser, User, UserCredentialsDto};
 use axum::{routing::post, Json, Router};
+use http::StatusCode;
 use jsonwebtoken::{encode, EncodingKey, Header};
-use serde::{Deserialize, Serialize};
 
 use crate::error::prelude::*;
 use crate::mw::jwt::Token;
+use std::env;
 
 pub(crate) fn router() -> Router {
     Router::new()
@@ -12,23 +13,7 @@ pub(crate) fn router() -> Router {
         .route("/login", post(login))
 }
 
-#[derive(Deserialize, Serialize, Clone)]
-pub(crate) struct UserDto {
-    username: String,
-    pass: String,
-}
-
-impl UserDto {
-    #[cfg(test)]
-    pub fn new(username: &str, pass: &str) -> Self {
-        Self {
-            username: username.to_owned(),
-            pass: pass.to_owned(),
-        }
-    }
-}
-
-pub(crate) async fn signup(Json(user): Json<UserDto>) -> RouteResult<Json<Token>> {
+pub(crate) async fn signup(Json(user): Json<UserCredentialsDto>) -> RouteResult<Json<Token>> {
     let hashed_password = tokio::task::spawn_blocking({
         let pass_input = user.pass.clone();
         move || {
@@ -42,14 +27,16 @@ pub(crate) async fn signup(Json(user): Json<UserDto>) -> RouteResult<Json<Token>
     User::new(&user.username, &hashed_password)
         .create_user()
         .await
-        .map_err(|err| route_error!("Failed to create user {err}", INTERNAL_SERVER_ERROR))?;
+        .context("Failed to create user")
+        .status_code(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let secret = env::var("JWT_SECRET")?;
 
     let token = tokio::task::spawn_blocking(move || {
-        // FIXME env secrets
         encode(
             &Header::default(),
             &AuthUser::new(&user.username),
-            &EncodingKey::from_secret("secret".as_ref()),
+            &EncodingKey::from_secret(secret.as_ref()),
         )
     })
     .await
@@ -64,28 +51,34 @@ pub(crate) async fn signup(Json(user): Json<UserDto>) -> RouteResult<Json<Token>
     Ok(Json(Token::new(token)))
 }
 
-pub(crate) async fn login(Json(user): Json<UserDto>) -> RouteResult<Json<Token>> {
+pub(crate) async fn login(Json(user): Json<UserCredentialsDto>) -> RouteResult<Json<Token>> {
     let user_from_db = api_db::user::User::get_user(&user.username)
         .await
         .map_err(|_| route_error!(" Failed to get user", INTERNAL_SERVER_ERROR))?
         .ok_or(route_error!("User not found", NOT_FOUND))?;
+    // ensure!(false);
+    println!("{:?}", route_error!("User not found", NOT_FOUND));
 
     let token = tokio::task::spawn_blocking(move || {
         let hashed_password = pretty_sha2::sha512::gen(&user.pass);
-        if user_from_db.pass != hashed_password {
-            throw!("Incorrect password", UNAUTHORIZED);
-        };
-        // FIXME env secrets
+        let secret = env::var("JWT_SECRET")?;
+
+        ensure!(
+            user_from_db.pass == hashed_password,
+            "Incorrect password",
+            UNAUTHORIZED
+        );
         encode(
             &Header::default(),
             &AuthUser::new(&user.username),
-            &EncodingKey::from_secret("secret".as_ref()),
+            &EncodingKey::from_secret(secret.as_ref()),
         )
-        .map_err(|_| route_error!("Failed to encode token.", INTERNAL_SERVER_ERROR))
+        .context("Failed to encode token.")
+        .status_code(StatusCode::INTERNAL_SERVER_ERROR)
     })
     .await
-    .map_err(|_| route_error!("Failed to encode token.", UNAUTHORIZED))??;
-
+    .context("Failed to encode token.")
+    .status_code(StatusCode::UNAUTHORIZED)??;
     Ok(Json(Token::new(token)))
 }
 
@@ -97,10 +90,11 @@ mod tests {
 
     #[tokio::test]
     async fn login_test() {
+        dotenv::dotenv().ok();
         init_db_test().await.expect("failed to init db");
 
         //  Signup user with password
-        let Json(_) = signup(Json(UserDto {
+        let Json(_) = signup(Json(UserCredentialsDto {
             username: "Vadim".to_string(),
             pass: "12345".to_string(),
         }))
@@ -108,7 +102,7 @@ mod tests {
         .expect("failed to signup");
 
         //  Right password
-        let Json(token) = login(Json(UserDto {
+        let Json(token) = login(Json(UserCredentialsDto {
             username: "Vadim".to_string(),
             pass: "12345".to_string(),
         }))
@@ -116,7 +110,7 @@ mod tests {
         .expect("failed to login");
 
         //  Wrong password!
-        let res = login(Json(UserDto {
+        let res = login(Json(UserCredentialsDto {
             username: "Vadim".to_string(),
             pass: "123456".to_string(),
         }))

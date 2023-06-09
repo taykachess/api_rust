@@ -60,6 +60,7 @@ impl Post {
 
     pub async fn delete_post(id: Uuid) -> Result<String> {
         let post: Record = crate::DB.delete(("post", id.to_string())).await?;
+
         Ok(post.id().to_string())
     }
 

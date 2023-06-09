@@ -1,6 +1,6 @@
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // let addr_db = "127.0.0.1:8000";
+    dotenv::dotenv().ok();
     let ns = "test";
     let db = "test";
     api_db::init_db(ns, db).await?;
