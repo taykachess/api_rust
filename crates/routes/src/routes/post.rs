@@ -25,21 +25,12 @@ async fn check_author(user: &AuthUser, post_id: Uuid) -> RouteResult<()> {
 }
 
 pub(crate) fn router() -> Router {
-    // return two merged router
-
-    let router_auth = Router::new()
+    Router::new()
         .route("/", post(create_post))
-        .route("/:id", get(get_post))
         .route("/:id", patch(update_post))
         .route("/:id", delete(delete_post))
-        .layer(middleware::from_fn(crate::mw::jwt::token));
-
-    let router_public = Router::new().route("/", get(get_post));
-
-    // TODO: combine two router
-    Router::new()
-        .nest("/", router_public)
-        .nest("/", router_auth)
+        .layer(middleware::from_fn(crate::mw::jwt::token))
+        .route("/:id", get(get_post))
 }
 
 async fn create_post(
@@ -75,10 +66,7 @@ async fn delete_post(
     Ok(Json(post_id))
 }
 
-async fn get_post(
-    Extension(_): Extension<AuthUser>,
-    Path(post_id): Path<Uuid>,
-) -> RouteResult<Json<Post>> {
+async fn get_post(Path(post_id): Path<Uuid>) -> RouteResult<Json<Post>> {
     let post = Post::get_post(post_id).await?;
 
     Ok(Json(post))
