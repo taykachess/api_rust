@@ -62,6 +62,7 @@ dependencies = [
  "dotenv",
  "http",
  "jsonwebtoken",
+ "log",
  "pretty-sha2",
  "serde",
  "serde_json",

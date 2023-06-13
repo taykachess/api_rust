@@ -69,4 +69,8 @@ impl Post {
 
         Ok(post)
     }
+
+    pub fn get_username(self) -> String {
+        self.username
+    }
 }

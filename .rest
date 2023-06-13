@@ -23,7 +23,7 @@ Content-Type: application/json
 
 ###
 POST http://localhost:4000/post
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlZhZGltIiwicm9sZXMiOltdLCJleHAiOjE2ODY0MDQwNDZ9.iehXUUAMfs2WCBzZgNbNjp3aVtctOUNnwEnJxAEN138
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlZhZGltIiwicm9sZXMiOltdLCJleHAiOjE2ODcyODE4MjF9.hI-lP76XlEruA20nI5oizlCyDqI0Zjzp4oe934kmZLs
 Content-Type: application/json
 
 {
@@ -33,3 +33,7 @@ Content-Type: application/json
 
 # title: String,
 #     body: String,
+
+
+###
+GET http://localhost:4000/post/fff4e837-0bca-4e8a-beb2-ff7e873a4bda

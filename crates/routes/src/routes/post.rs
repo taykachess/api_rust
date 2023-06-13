@@ -12,15 +12,34 @@ use axum::{
 
 use uuid::Uuid;
 
-use crate::mw::jwt::Token;
+use crate::error::prelude::*;
+use crate::{error::RouteResult, mw::jwt::Token};
+
+async fn check_author(user: &AuthUser, post_id: Uuid) -> RouteResult<()> {
+    let post_from_db = Post::get_post(post_id).await?;
+    ensure!(
+        post_from_db.get_username() == user.username,
+        StatusCode::FORBIDDEN
+    );
+    Ok(())
+}
 
 pub(crate) fn router() -> Router {
-    Router::new()
+    // return two merged router
+
+    let router_auth = Router::new()
         .route("/", post(create_post))
-        .route("/", get(get_post))
+        .route("/:id", get(get_post))
         .route("/:id", patch(update_post))
         .route("/:id", delete(delete_post))
-        .route_layer(middleware::from_fn(crate::mw::jwt::token))
+        .layer(middleware::from_fn(crate::mw::jwt::token));
+
+    let router_public = Router::new().route("/", get(get_post));
+
+    // TODO: combine two router
+    Router::new()
+        .nest("/", router_public)
+        .nest("/", router_auth)
 }
 
 async fn create_post(
@@ -38,27 +57,29 @@ async fn create_post(
 
 // WOW ordering of extractors is important!
 async fn update_post(
+    Extension(user): Extension<AuthUser>,
     Path(post_id): Path<Uuid>,
     Json(post): Json<Post>,
-) -> Result<String, StatusCode> {
-    let post_id = Post::update_post(post, post_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(post_id)
+) -> RouteResult<Json<String>> {
+    check_author(&user, post_id).await?;
+    let post_id = Post::update_post(post, post_id).await?;
+    Ok(Json(post_id))
 }
 
-async fn delete_post(Path(post_id): Path<Uuid>) -> Result<String, StatusCode> {
-    let post_id = Post::delete_post(post_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    Ok(post_id)
+async fn delete_post(
+    Extension(user): Extension<AuthUser>,
+    Path(post_id): Path<Uuid>,
+) -> RouteResult<Json<String>> {
+    check_author(&user, post_id).await?;
+    let post_id = Post::delete_post(post_id).await?;
+    Ok(Json(post_id))
 }
 
-async fn get_post(Path(post_id): Path<Uuid>) -> Result<Json<Post>, StatusCode> {
-    let post = Post::get_post(post_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+async fn get_post(
+    Extension(_): Extension<AuthUser>,
+    Path(post_id): Path<Uuid>,
+) -> RouteResult<Json<Post>> {
+    let post = Post::get_post(post_id).await?;
 
     Ok(Json(post))
 }
@@ -104,7 +125,10 @@ mod tests {
             .await
             .expect("Not found Post");
 
+        print!("Post: {:?}", post);
+
         let post_id = update_post(
+            Extension(user.clone()),
             Path(Uuid::try_parse(&post_id).expect("Not parced")),
             Json(Post::new(
                 PostCreateDto::new(Option::Some("Title".to_owned()), Option::None),
@@ -114,7 +138,55 @@ mod tests {
         .await
         .expect("Post not updated");
 
-        // TODO привести все id к одному виду
+        let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
+            .await
+            .expect("Not found Post");
+    }
+
+    #[tokio::test]
+    async fn crud_test() {
+        dotenv::dotenv().ok();
+        init_db_test().await.expect("failed to init db");
+
+        // TODO: DRY
+
+        //  Signup
+        let Json(_) =
+            crate::routes::auth::signup(Json(UserCredentialsDto::new("Vadim123", "12345")))
+                .await
+                .expect("failed to signup");
+
+        //  login
+        let Json(token) =
+            crate::routes::auth::login(Json(UserCredentialsDto::new("Vadim123", "12345")))
+                .await
+                .expect("failed to login");
+
+        let user = authorize_current_user(token.get())
+            .await
+            .expect("fail to authorize user");
+
+        let post_create_dto = PostCreateDto::new(Option::None, Option::Some("Body".to_owned()));
+
+        let Json(post_id) = create_post(Extension(user.clone()), Json(post_create_dto))
+            .await
+            .expect("failed to create post");
+
+        let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
+            .await
+            .expect("Not found Post");
+
+        let post_id = update_post(
+            Extension(user.clone()),
+            Path(Uuid::try_parse(&post_id).expect("Not parced")),
+            Json(Post::new(
+                PostCreateDto::new(Option::Some("Title".to_owned()), Option::None),
+                user.username,
+            )),
+        )
+        .await
+        .expect("Post not updated");
+
         let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
             .await
             .expect("Not found Post");

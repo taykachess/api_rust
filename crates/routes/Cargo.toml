@@ -18,6 +18,7 @@ tokio = { workspace = true }
 uuid = { workspace = true }
 jsonwebtoken = { version = "8" }
 http = { workspace = true }
+log = { workspace = true }
 
 
 [dev-dependencies]
