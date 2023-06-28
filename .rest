@@ -23,11 +23,11 @@ Content-Type: application/json
 
 ###
 POST http://localhost:4000/post
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlZhZGltIiwicm9sZXMiOltdLCJleHAiOjE2ODcyODE4MjF9.hI-lP76XlEruA20nI5oizlCyDqI0Zjzp4oe934kmZLs
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6IlZhZGltIiwicm9sZXMiOltdLCJleHAiOjE2ODc4ODc3NDN9.LS4ZDxqP6tZ_VDXhFNBNNYTcEW70hGu0rGFnlKDbaMU
 Content-Type: application/json
 
 {
-    "title": "My first post",
+    "title": "My secodn post",
     "body": "This is my first post"
 }
 

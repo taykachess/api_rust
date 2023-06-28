@@ -56,8 +56,6 @@ pub(crate) async fn login(Json(user): Json<UserCredentialsDto>) -> RouteResult<J
         .await
         .map_err(|_| route_error!(" Failed to get user", INTERNAL_SERVER_ERROR))?
         .ok_or(route_error!("User not found", NOT_FOUND))?;
-    // ensure!(false);
-    println!("{:?}", route_error!("User not found", NOT_FOUND));
 
     let token = tokio::task::spawn_blocking(move || {
         let hashed_password = pretty_sha2::sha512::gen(&user.pass);

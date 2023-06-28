@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
-use surrealdb::Result;
+use surrealdb::{sql::Error, Result};
 use uuid::Uuid;
 
 use crate::user::Record;
@@ -68,6 +70,22 @@ impl Post {
         let post: Post = crate::DB.select(("post", id.to_string())).await?;
 
         Ok(post)
+    }
+
+    pub async fn get_posts(limit: usize, offset: usize) -> Result<Vec<Post>> {
+        #[derive(Serialize)]
+        struct Bindings {
+            limit: usize,
+            offset: usize,
+        }
+        // Assign the variable on the connection
+        let mut result = crate::DB
+            .query("SELECT * FROM post ORDER BY id ASC LIMIT $limit START $offset")
+            .bind(Bindings { limit, offset })
+            .await?;
+        let posts: Vec<Post> = result.take(0)?;
+
+        Ok(posts)
     }
 
     pub fn get_username(self) -> String {
