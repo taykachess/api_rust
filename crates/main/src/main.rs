@@ -1,5 +1,8 @@
+mod logger;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    logger::init().expect("Failed to init logger");
     dotenv::dotenv().ok();
     let ns = "test";
     let db = "test";

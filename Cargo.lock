@@ -1046,6 +1046,7 @@ dependencies = [
  "api_db",
  "api_routes",
  "dotenv",
+ "log",
  "tokio",
 ]
 

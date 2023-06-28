@@ -12,3 +12,4 @@ api_db = { path = "../db" }
 tokio = { workspace = true }
 anyhow = { worspace = true }
 dotenv = { workspace = true }
+log = { workspace = true }

@@ -4,6 +4,9 @@ use surrealdb::{Result, Surreal};
 
 static DB: Surreal<Db> = Surreal::init();
 
+/// **Initialize DB**
+/// This function only for testing
+/// ``` init_db_test() ```
 pub async fn init_db_test() -> Result<()> {
     DB.connect::<Mem>(()).await?;
     // Select a namespace + database
