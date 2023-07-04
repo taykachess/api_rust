@@ -8,7 +8,6 @@ use crate::user::Record;
 
 #[derive(Deserialize, Serialize)]
 pub struct PostCreateDto {
-    // username: String,
     title: Option<String>,
     body: Option<String>,
 }

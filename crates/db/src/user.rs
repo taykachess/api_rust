@@ -85,7 +85,7 @@ impl User {
 
     pub async fn create_user(&self) -> Result<()> {
         // ID of each user is the same as username ??
-        let id: Record = crate::DB
+        let _: Record = crate::DB
             .create(("user", &self.username))
             .content(self)
             .await?;

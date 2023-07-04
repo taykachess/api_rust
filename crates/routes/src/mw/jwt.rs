@@ -68,17 +68,4 @@ pub(crate) async fn authorize_current_user(token: &str) -> RouteResult<AuthUser>
     .context("Wrong decoding token.")?;
 
     Ok(user.claims)
-
-    // ...
 }
-
-// async fn handler(
-//     // extract the current user, set by the middleware
-//     Extension(current_user): Extension<CurrentUser>,
-// ) {
-//     // ...
-// }
-
-// let app = Router::new()
-//     .route("/", get(handler))
-//     .route_layer(middleware::from_fn(auth));
