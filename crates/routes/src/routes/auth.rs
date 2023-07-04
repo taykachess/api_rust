@@ -91,7 +91,6 @@ mod tests {
         dotenv::dotenv().ok();
         init_db_test().await.expect("failed to init db");
 
-        //  Signup user with password
         let Json(_) = signup(Json(UserCredentialsDto {
             username: "Vadim".to_string(),
             pass: "12345".to_string(),
@@ -99,7 +98,6 @@ mod tests {
         .await
         .expect("failed to signup");
 
-        //  Right password
         let Json(token) = login(Json(UserCredentialsDto {
             username: "Vadim".to_string(),
             pass: "12345".to_string(),
@@ -107,14 +105,11 @@ mod tests {
         .await
         .expect("failed to login");
 
-        //  Wrong password!
         let res = login(Json(UserCredentialsDto {
             username: "Vadim".to_string(),
             pass: "123456".to_string(),
         }))
         .await;
-
-        // ensure!(res.is_err(), "Failed to login");
 
         assert!(matches!(res.is_err(), true));
     }

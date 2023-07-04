@@ -1,6 +1,5 @@
 use std::io::Write;
-use std::path::Path;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::Mutex;
 
 use log::{Level, Metadata, Record};
 
@@ -51,5 +50,3 @@ pub(crate) fn init() -> Result<(), SetLoggerError> {
 
     log::set_logger(Box::leak(logger)).map(|()| log::set_max_level(LevelFilter::Info))
 }
-
-// fn
