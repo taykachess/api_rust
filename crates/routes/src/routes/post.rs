@@ -14,7 +14,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::error::prelude::*;
-use crate::{error::RouteResult, mw::jwt::Token};
+use crate::error::RouteResult;
 
 #[derive(Deserialize)]
 struct Pagination {
@@ -94,79 +94,78 @@ mod tests {
     use crate::mw::jwt::authorize_current_user;
 
     use super::*;
-    use api_db::{init_db_test, user::UserCredentialsDto};
 
-    // #[tokio::test]
-    // async fn create_post_test() {
-    //     crate::test_utils::init_test_utils().await;
-    //     let token = crate::test_utils::create_user_and_get_token().await;
+    #[tokio::test]
+    async fn create_post_test() {
+        crate::test_utils::init_test_utils().await;
+        let token = crate::test_utils::create_user_and_get_token().await;
 
-    //     let user = authorize_current_user(token.get())
-    //         .await
-    //         .expect("fail to authorize user");
+        let user = authorize_current_user(token.get())
+            .await
+            .expect("fail to authorize user");
 
-    //     let post_create_dto = PostCreateDto::new(Option::None, Option::Some("Body".to_owned()));
+        let post_create_dto = PostCreateDto::new(Option::None, Option::Some("Body".to_owned()));
 
-    //     let Json(post_id) = create_post(Extension(user.clone()), Json(post_create_dto))
-    //         .await
-    //         .expect("failed to create post");
+        let Json(post_id) = create_post(Extension(user.clone()), Json(post_create_dto))
+            .await
+            .expect("failed to create post");
 
-    //     let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
-    //         .await
-    //         .expect("Not found Post");
+        let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
+            .await
+            .expect("Not found Post");
 
-    //     print!("Post: {:?}", post);
+        print!("Post: {:?}", post);
 
-    //     let post_id = update_post(
-    //         Extension(user.clone()),
-    //         Path(Uuid::try_parse(&post_id).expect("Not parced")),
-    //         Json(Post::new(
-    //             PostCreateDto::new(Option::Some("Title".to_owned()), Option::None),
-    //             user.username,
-    //         )),
-    //     )
-    //     .await
-    //     .expect("Post not updated");
+        let post_id = update_post(
+            Extension(user.clone()),
+            Path(Uuid::try_parse(&post_id).expect("Not parced")),
+            Json(Post::new(
+                PostCreateDto::new(Option::Some("Title".to_owned()), Option::None),
+                user.username,
+            )),
+        )
+        .await
+        .expect("Post not updated");
 
-    //     let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
-    //         .await
-    //         .expect("Not found Post");
-    // }
+        let Json(_) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
+            .await
+            .expect("Not found Post");
+    }
 
-    // #[tokio::test]
-    // async fn crud_test() {
-    //     crate::test_utils::init_test_utils().await;
-    //     let token = crate::test_utils::create_user_and_get_token().await;
+    #[tokio::test]
+    async fn crud_test() {
+        crate::test_utils::init_test_utils().await;
+        let token = crate::test_utils::create_user_and_get_token().await;
 
-    //     let user = authorize_current_user(token.get())
-    //         .await
-    //         .expect("fail to authorize user");
+        let user = authorize_current_user(token.get())
+            .await
+            .expect("fail to authorize user");
 
-    //     let post_create_dto = PostCreateDto::new(Option::None, Option::Some("Body".to_owned()));
+        let post_create_dto = PostCreateDto::new(Option::None, Option::Some("Body".to_owned()));
 
-    //     let Json(post_id) = create_post(Extension(user.clone()), Json(post_create_dto))
-    //         .await
-    //         .expect("failed to create post");
+        let Json(post_id) = create_post(Extension(user.clone()), Json(post_create_dto))
+            .await
+            .expect("failed to create post");
 
-    //     let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
-    //         .await
-    //         .expect("Not found Post");
+        let Json(_) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
+            .await
+            .expect("Not found Post");
 
-    //     let post_id = update_post(
-    //         Extension(user.clone()),
-    //         Path(Uuid::try_parse(&post_id).expect("Not parced")),
-    //         Json(Post::new(
-    //             PostCreateDto::new(Option::Some("Title".to_owned()), Option::None),
-    //             user.username,
-    //         )),
-    //     )
-    //     .await
-    //     .expect("Post not updated");
+        let post_id = update_post(
+            Extension(user.clone()),
+            Path(Uuid::try_parse(&post_id).expect("Not parced")),
+            Json(Post::new(
+                PostCreateDto::new(Option::Some("Title".to_owned()), Option::None),
+                user.username,
+            )),
+        )
+        .await
+        .expect("Post not updated");
 
-    //     let Json(post) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
-    //         .await
-    //         .expect("Not found Post");
-    // }
+        let Json(_) = get_post(Path(Uuid::try_parse(&post_id).expect("Not parced")))
+            .await
+            .expect("Not found Post");
+    }
 
     #[tokio::test]
     async fn get_posts_tests() {
@@ -178,7 +177,7 @@ mod tests {
 
         for _ in 0..55 {
             let post_create_dto = PostCreateDto::new(Option::None, Option::Some("Body".to_owned()));
-            let Json(id) = create_post(Extension(user.clone()), Json(post_create_dto))
+            let Json(_) = create_post(Extension(user.clone()), Json(post_create_dto))
                 .await
                 .expect("failed to create post");
         }
