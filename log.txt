@@ -58,3 +58,5 @@ ERROR - RouteError (404 Not Found)
 INFO - POST /auth/login 200 OK 
 INFO - Starting kvs store in memory 
 INFO - Started kvs store in memory 
+INFO - Starting kvs store in memory 
+INFO - Started kvs store in memory 

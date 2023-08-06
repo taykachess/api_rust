@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
-use surrealdb::{sql::Error, Result};
+use surrealdb::Result;
 use uuid::Uuid;
 
 use crate::user::Record;
