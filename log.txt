@@ -60,3 +60,64 @@ INFO - Starting kvs store in memory
 INFO - Started kvs store in memory 
 INFO - Starting kvs store in memory 
 INFO - Started kvs store in memory 
+INFO - Starting kvs store in memory 
+INFO - Started kvs store in memory 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/login 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/login 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - Starting kvs store in memory 
+INFO - Started kvs store in memory 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 200 OK 
+INFO - Starting kvs store in memory 
+INFO - Started kvs store in memory 
+INFO - Starting kvs store in memory 
+INFO - Started kvs store in memory 
+INFO - Starting kvs store in memory 
+INFO - Started kvs store in memory 
+INFO - Starting kvs store in memory 
+INFO - Started kvs store in memory 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 200 OK 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - POST /auth/signup 500 Internal Server Error 
+INFO - process; 
+INFO - executor; 
+INFO - GET /post/5882c98b-8626-498b-a4fa-40bd6f831da6 500 Internal Server Error 
+INFO - Starting kvs store in memory 
+INFO - Started kvs store in memory 
+INFO - Starting kvs store in memory 
+INFO - Started kvs store in memory 
